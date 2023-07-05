@@ -196,7 +196,8 @@ def pad_images(directory):
 
 # If Main Declaration
 if __name__ == "__main__":
-    
+
+
     source_path = "E:/ml_color_data/training_data/raw_data"
     dest_path = "E:/ml_color_data/training_data/filtered_data"
     
