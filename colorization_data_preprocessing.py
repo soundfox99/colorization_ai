@@ -9,7 +9,7 @@ import time
 # Imported Third Party Libraries
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
-import tqdm
+from tqdm import tqdm
 
 # Global Variable Definations
 MAX_WIDTH = 1400
@@ -31,7 +31,7 @@ def create_image_dimensions_histogram(directory):
                 image_dimensions = get_image_dimensions(image_path)
                 
                 image_counter += 1
-                if ((image_dimensions[0] < MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
+                if ((image_dimensions[0] <= MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
                     dimensions.append(image_dimensions)
                 else:
                     #if (filename.split(".")[0] == "01"):
@@ -118,7 +118,7 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
             if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
                 source_path = os.path.join(root, filename)
                 image_dimensions = get_image_dimensions(source_path)
-                if ((image_dimensions[0] < MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
+                if ((image_dimensions[0] <= MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
                     if first_page:
                         first_page_path = source_path
 
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     source_path = "E:/ml_color_data/training_data/raw_data"
     dest_path = "E:/ml_color_data/training_data/filtered_data"
     
-    #create_image_dimensions_histogram(source_path)
+    create_image_dimensions_histogram(dest_path)
     #copy_and_rename_pictures(source_path, dest_path)
     #pad_images(dest_path)
 
