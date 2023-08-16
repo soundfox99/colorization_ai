@@ -78,7 +78,8 @@ def test_model(model_path, input_dir, output_dir):
         results = model.predict([bw_images, color_images])
 
     file_number = 1
-    for result in results[0]:
+    os.makedirs(output_dir, exist_ok=True)
+    for result in results:
         rescaled_result = (result * 255).astype(np.uint8)
 
         # Convert the array to a PIL Image object
@@ -93,10 +94,10 @@ def test_model(model_path, input_dir, output_dir):
 
 if __name__ == "__main__":
     
-    model_path = "./models/model_20230815-093511.keras"
+    model_path = "./models/model_2023_08_15-18_09_42.keras"
     input_dir = "./testing_data/Input"
-    output_dir = "./Output"
+    output_dir = "./testing_data/Output/Example1"
     
-    #pad_images(test_dir)
+    pad_images(input_dir)
     test_model(model_path, input_dir, output_dir)
     
