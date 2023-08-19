@@ -82,29 +82,16 @@ def pad_image(image_path, target_size):
     padded_image.save(image_path)
 
 
-def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=1):
-    if not os.path.exists(dest_dir):
-        os.makedirs(dest_dir)
+def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=1, training_data_split=0.8):
+    
+    if os.path.exists(dest_dir):
+        shutil.rmtree(dest_dir)
+    os.makedirs(dest_dir)
 
-    input_1_dir = input_2_dir = output_dir = dest_dir
+   
+    num_inputs = count_files_in_directory(source_dir) + start_index
 
-    output_dir += "/Output"
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-
-    os.makedirs(output_dir)
-
-    input_2_dir += "/Input_2"
-    if os.path.exists(input_2_dir):
-        shutil.rmtree(input_2_dir)
-
-    os.makedirs(input_2_dir)
-
-    input_1_dir += "/Input_1"
-    if os.path.exists(input_1_dir):
-        shutil.rmtree(input_1_dir)
-
-    os.makedirs(input_1_dir)
+    num_train_data = (int) (num_inputs * training_data_split)
 
     index = start_index
     for root, dirs, files in os.walk(source_dir):
@@ -112,8 +99,21 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
         first_page = True
         first_page_path = ""
 
+        if index < num_train_data:
+            alt_dest_dir = dest_dir + "/training"
+        else:
+            alt_dest_dir = dest_dir + "/validation"
+
+        input_1_dir = input_2_dir = output_dir = dest_dir
+        input_1_dir = alt_dest_dir + "/Input_1/"
+        input_2_dir = alt_dest_dir + "/Input_2/"
+        output_dir = alt_dest_dir + "/Output/"
+
+        if not os.path.exists(input_1_dir): os.makedirs(input_1_dir)
+        if not os.path.exists(input_2_dir): os.makedirs(input_2_dir)
+        if not os.path.exists(output_dir): os.makedirs(output_dir)
+
         for filename in tqdm(files):
-            
 
             if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')) and (filename.split('.')[0] != "final"):
                 source_path = os.path.join(root, filename)
@@ -127,7 +127,7 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
                     else:
                         
                         dest_filename = f"{prefix}{index}{os.path.splitext(filename)[1]}"
-
+                        
                         output_path = os.path.join(output_dir, dest_filename)
                         input_2_path = os.path.join(input_2_dir, dest_filename)
                         input_1_path = os.path.join(input_1_dir, dest_filename)
@@ -140,6 +140,8 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
                             input_2_image.save(input_2_path)
                         
                         index += 1
+
+    return
 
 def display_images(image_paths):
     fig, axes = plt.subplots(1, 3, figsize=(10, 5))
@@ -193,16 +195,28 @@ def pad_images(directory):
             path = os.path.join(root, filename)
             pad_image(path, target_size)
 
+def count_files_in_directory(directory_path):
+    file_count = 0
+    for root, dirs, files in os.walk(directory_path):
+        file_count += len(files)
+    return file_count
+
+def shuffle_data(directory_path):
+
+    for root, dirs, files in os.walk(directory_path):
+        pass
+
+    return
 
 # If Main Declaration
 if __name__ == "__main__":
 
 
-    source_path = "./raw_data"
-    dest_path = "./filtered_data"
+    source_path = "./training_data/raw_data"
+    dest_path = "./training_data/filtered_data"
     
-    create_image_dimensions_histogram(dest_path)
+    #create_image_dimensions_histogram(dest_path)
     #copy_and_rename_pictures(source_path, dest_path)
     #pad_images(dest_path)
 
-    display_random_images(dest_path)
+    #display_random_images(dest_path)
