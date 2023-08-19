@@ -6,6 +6,7 @@ import random
 import time
 import random
 import re
+import concurrent.futures
 
 # Imported Third Party Libraries
 import plotly.graph_objects as go
@@ -160,53 +161,9 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
 
     return
 
-def display_images(image_paths):
-    fig, axes = plt.subplots(1, 3, figsize=(10, 5))
 
-    for i, path in enumerate(image_paths):
-        image = Image.open(path)
-
-        if i == 1:
-            # Convert the second image to black and white
-            image = image.convert('L')
-            cmap = 'gray'
-        else:
-            cmap = None
-
-        axes[i].imshow(image, cmap=cmap)
-        axes[i].axis('off')
-
-    fig.suptitle(f"{image_paths[0].split('/')[-1]}")
-    plt.tight_layout()
-    plt.show()
-
-    # Wait until a button is pressed or the window is closed
-    plt.waitforbuttonpress()
                     
-def display_random_images(diretory):
 
-    input_1_dir = input_2_dir = output_dir = diretory
-
-    output_dir += "/Output/"
-    input_2_dir += "/Input_2/"
-    input_1_dir += "/Input_1/"
-
-
-    output_files = [filename for filename in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, filename))]
-    input_2_files = [filename for filename in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, filename))]
-    input_1_files = [filename for filename in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, filename))]
-
-    if not (len(output_files) == len(input_2_files) == len(input_1_files)):
-        return
-
-    # for i in range(100):
-    #     random_file_number = random.randint(1, len(output_files))
-    #     print(output_files[random_file_number], input_2_files[random_file_number], input_1_files[random_file_number])
-
-    for _ in range(1000):
-        random_file_number = random.randint(1, len(output_files))
-        image_paths = [input_1_dir + input_1_files[random_file_number], input_2_dir + input_2_files[random_file_number], output_dir + output_files[random_file_number]]
-        display_images(image_paths)
 
 def pad_images(directory):
     # Iterate through images and add black padding to them
@@ -215,6 +172,20 @@ def pad_images(directory):
             target_size = (MAX_WIDTH, MAX_LENGTH)
             path = os.path.join(root, filename)
             pad_image(path, target_size)
+
+def process_image(path):
+    target_size = (MAX_WIDTH, MAX_LENGTH)
+    pad_image(path, target_size)
+
+def pad_images_parallel(directory):
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        image_paths = []
+        for root, dirs, files in os.walk(directory):
+            for filename in files:
+                path = os.path.join(root, filename)
+                image_paths.append(path)
+        
+        list(tqdm(executor.map(process_image, image_paths), total=len(image_paths)))
 
 def count_files_in_directory(directory_path):
     file_count = 0
@@ -287,9 +258,6 @@ if __name__ == "__main__":
     source_path = "./training_data/raw_data"
     dest_path = "./training_data/filtered_data"
     
-    #create_image_dimensions_histogram(dest_path)
-    #copy_and_rename_pictures(source_path, dest_path + "_temp")
+    copy_and_rename_pictures(source_path, dest_path + "_temp")
     shuffle_data(dest_path + "_temp", dest_path)
-    pad_images(dest_path)
-
-    #display_random_images(dest_path + "/training/")
+    pad_images_parallel(dest_path)
