@@ -113,7 +113,7 @@ def test_model(model_path, input_dir, output_dir):
 
 if __name__ == "__main__":
     
-    model_path = "./models/model-2023_08_20_18_44_15-0.0081-0.7168-0.0079-0.7137.keras"
+    model_path = "./models/model-2023_08_21_03_50_28-0.1643-0.4817-0.1554-0.4702.keras"
     input_dir = "./testing_data/Input"
     output_dir = "./testing_data/Output/Example1"
     
