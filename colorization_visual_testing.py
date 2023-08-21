@@ -53,33 +53,52 @@ def test_model(model_path, input_dir, output_dir):
 
     bw_images = []
     color_images = []
-    initial_image = False
+    initial_image = True
     for root, dirs, files in os.walk(input_dir):
         for filename in tqdm(files):
             file_path = f"{root}/{filename}"
             if initial_image:
                 color_img = cv2.imread(file_path, cv2.IMREAD_COLOR)
+
+                # cv2.imshow("Image", color_img)
+                # # # Wait for a key press and close the window when a key is pressed
+                # cv2.waitKey(0)
+                # cv2.destroyAllWindows()
+                
+                color_img = np.expand_dims(color_img, axis=0)
+                color_img = color_img / 255.0
+                # Iterate through the pixels and print the pixel coordinates where value is 0
                 initial_image = False
                 continue
             else:
                 bw_img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+                
+                # cv2.imshow("Image", bw_img)
+                # # Wait for a key press and close the window when a key is pressed
+                # cv2.waitKey(0)
+                # cv2.destroyAllWindows()
+
                 bw_img = np.expand_dims(bw_img, axis=-1)  # Add channel dimension
-            bw_img = bw_img / 255.0
+                bw_img = np.expand_dims(bw_img, axis=0)  # Add channel dimension
+                bw_img = bw_img / 255.0
+            
             bw_images.append(bw_img)
             color_images.append(color_img)
-        initial_image = True
 
     bw_images = np.array(bw_images)
     color_images = np.array(color_images)
     model = tf.keras.models.load_model(model_path)
 
-        
-    with tf.device('/GPU:0'):
-        results = model.predict([bw_images, color_images])
+    results = []
+    for bw_image, color_image in zip(bw_images, color_images):
+        # results.append(color_image)
+        with tf.device('/GPU:0'):
+            results.append(model.predict([bw_image, color_image]))
 
+    processed_results = [array[0] for array in results]
     file_number = 1
     os.makedirs(output_dir, exist_ok=True)
-    for result in results:
+    for result in processed_results:
         rescaled_result = (result * 255).astype(np.uint8)
 
         # Convert the array to a PIL Image object
@@ -94,9 +113,9 @@ def test_model(model_path, input_dir, output_dir):
 
 if __name__ == "__main__":
     
-    model_path = "../models/model-2023_08_17_05_31_05-0.01-0.67-0.01-0.7.keras"
-    input_dir = "./Input"
-    output_dir = "./Output/Example1"
+    model_path = "./models/model-2023_08_20_23_02_14-0.1657-0.4795-0.1553-0.4702.keras"
+    input_dir = "./testing_data/Input"
+    output_dir = "./testing_data/Output/Example1"
     
     pad_images(input_dir)
     test_model(model_path, input_dir, output_dir)
