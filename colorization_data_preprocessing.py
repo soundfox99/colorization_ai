@@ -260,4 +260,6 @@ if __name__ == "__main__":
     
     copy_and_rename_pictures(source_path, dest_path + "_temp")
     #shuffle_data(dest_path + "_temp", dest_path)
-    pad_images_parallel(dest_path)
+    pad_images(dest_path)
+    #pad_images_parallel(dest_path)
+ 
