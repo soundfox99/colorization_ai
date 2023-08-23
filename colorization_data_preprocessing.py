@@ -12,6 +12,7 @@ import concurrent.futures
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import cv2
 
 # Global Variable Definations
 MAX_WIDTH = 1400
@@ -65,6 +66,11 @@ def create_image_dimensions_histogram(directory):
 def pad_image(image_path, target_size):
     # Open the image
     image = Image.open(image_path)
+
+    if image.mode == "L":
+        pass
+    elif image.mode != 'RGB':
+        image = image.convert('RGB')
 
     # Get the current size
     width, height = image.size
@@ -129,35 +135,38 @@ def copy_and_rename_pictures(source_dir, dest_dir, prefix="image_", start_index=
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
         for filename in tqdm(files):
+            try:
+                if filename.endswith(('.jpg', '.jpeg', '.png')) and (filename.split('.')[0] != "final"):
+                    source_path = os.path.join(root, filename)
 
-            if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')) and (filename.split('.')[0] != "final"):
-                source_path = os.path.join(root, filename)
+                    # Copy the image if it is smaller or equal to the image limitations
+                    image_dimensions = get_image_dimensions(source_path)
+                    if ((image_dimensions[0] <= MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
+                        if first_page:
+                            first_page_path = source_path
 
-                # Copy the image if it is smaller or equal to the image limitations
-                image_dimensions = get_image_dimensions(source_path)
-                if ((image_dimensions[0] <= MAX_WIDTH) and (image_dimensions[1] <= MAX_LENGTH)):
-                    if first_page:
-                        first_page_path = source_path
+                            first_page = False
+                            continue
+                        else:                       
+                            dest_filename = f"{prefix}{index}{os.path.splitext(filename)[1]}"
+                            
+                            # Copy the files into their correct folders
+                            output_path = os.path.join(output_dir, dest_filename)
+                            input_2_path = os.path.join(input_2_dir, dest_filename)
+                            input_1_path = os.path.join(input_1_dir, dest_filename)
 
-                        first_page = False
-                        continue
-                    else:
-                        
-                        dest_filename = f"{prefix}{index}{os.path.splitext(filename)[1]}"
-                        
-                        # Copy the files into their correct folders
-                        output_path = os.path.join(output_dir, dest_filename)
-                        input_2_path = os.path.join(input_2_dir, dest_filename)
-                        input_1_path = os.path.join(input_1_dir, dest_filename)
+                            shutil.copyfile(first_page_path, input_1_path)
+                            shutil.copyfile(source_path, output_path)
 
-                        shutil.copyfile(first_page_path, input_1_path)
-                        shutil.copyfile(source_path, output_path)
+                            with Image.open(source_path) as img:
+                                input_2_image = img.convert("L")
+                                input_2_image.save(input_2_path)
+                            
+                            index += 1
+            except:
+                pass
 
-                        with Image.open(source_path) as img:
-                            input_2_image = img.convert("L")
-                            input_2_image.save(input_2_path)
-                        
-                        index += 1
+
 
     return
 
@@ -251,6 +260,44 @@ def shuffle_data(source_dir, dest_dir):
 
     return
 
+def delete_problem_files(directory):
+    input_1_dir = input_2_dir = output_dir = directory
+
+    output_dir += "/Output/"
+    input_2_dir += "/Input_2/"
+    input_1_dir += "/Input_1/"
+
+
+    output_files = [{filename} for filename in os.listdir(output_dir)]
+    input_2_files = [{filename} for filename in os.listdir(input_2_dir)]
+    input_1_files = [{filename} for filename in os.listdir(input_1_dir)]
+
+    if not (output_files == input_2_files == input_1_files):
+        print("Files do not match")
+        return
+
+    output_files = [f"{output_dir}{filename}" for filename in os.listdir(output_dir)]
+    input_2_files = [f"{input_2_dir}{filename}" for filename in os.listdir(input_2_dir)]
+    input_1_files = [f"{input_1_dir}{filename}" for filename in os.listdir(input_1_dir)]
+
+    deleted_files = 0
+    for input_1_file, input_2_file, output_file in tqdm(zip(input_1_files, input_2_files, output_files)):
+        try:
+            img = cv2.imread(input_1_file, cv2.IMREAD_COLOR)
+            img = img / 255.0
+            img = cv2.imread(input_2_file, cv2.IMREAD_GRAYSCALE)
+            img = img / 255.0
+            img = cv2.imread(output_file, cv2.IMREAD_COLOR)
+            img = img / 255.0 
+        except:
+            os.remove(input_1_file)
+            os.remove(input_2_file)
+            os.remove(output_file)
+            deleted_files += 1
+
+    print(deleted_files)
+    return
+
 # If Main Declaration
 if __name__ == "__main__":
 
@@ -258,8 +305,11 @@ if __name__ == "__main__":
     source_path = "./training_data/raw_data"
     dest_path = "./training_data/filtered_data"
     
-    copy_and_rename_pictures(source_path, dest_path + "_temp")
-    shuffle_data(dest_path + "_temp", dest_path)
+    #copy_and_rename_pictures(source_path, dest_path + "_temp")
+    #shuffle_data(dest_path + "_temp", dest_path)
     #pad_images(dest_path)
-    pad_images_parallel(dest_path)
+    #pad_images_parallel(dest_path)
+
+    delete_problem_files(dest_path + "/training")
+    delete_problem_files(dest_path + "/validation")
  
